@@ -1,17 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api, API_BASE_URL, getToken, setToken } from './api.js';
 
-const demoCategories = [
-  { id: 'electronics', name: 'Electronics', slug: 'electronics' },
-  { id: 'office', name: 'Office', slug: 'office' },
-];
-
-const demoProducts = [
-  { id: 'demo-keyboard', name: 'Wireless Keyboard', slug: 'wireless-keyboard', description: 'Compact rechargeable keyboard with quiet low-profile keys.', price: 49.99, stock: 35, categoryId: 'electronics', category: demoCategories[0] },
-  { id: 'demo-hub', name: 'USB-C Hub', slug: 'usb-c-hub', description: 'Seven-port productivity hub for a cleaner, faster workspace.', price: 39.99, stock: 50, categoryId: 'electronics', category: demoCategories[0] },
-  { id: 'demo-organizer', name: 'Desk Organizer', slug: 'desk-organizer', description: 'Minimal modular organizer for everyday desk essentials.', price: 24.5, stock: 80, categoryId: 'office', category: demoCategories[1] },
-];
-
 const money = value => `$${Number(value || 0).toFixed(2)}`;
 const initials = name => String(name || 'SP').split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase();
 const productTone = product => {
@@ -111,6 +100,7 @@ export default function App() {
   const [products, setProducts] = useState([]); const [categories, setCategories] = useState([]);
   const [query, setQuery] = useState(''); const [category, setCategory] = useState('');
   const [loading, setLoading] = useState(true); const [apiLive, setApiLive] = useState(true);
+  const [apiError, setApiError] = useState('');
   const [user, setUser] = useState(null); const [authOpen, setAuthOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false); const [cart, setCart] = useState({ items: [], total: 0 }); const [cartLoading, setCartLoading] = useState(false);
   const [orders, setOrders] = useState([]); const [ordersLoading, setOrdersLoading] = useState(false);
@@ -119,8 +109,8 @@ export default function App() {
   const notify = message => { setToast(message); window.clearTimeout(window.__stockpilotToast); window.__stockpilotToast = window.setTimeout(() => setToast(''), 3200); };
   const loadCatalog = async () => {
     setLoading(true);
-    try { const [productData, categoryData] = await Promise.all([api.products({ search: query, category }), api.categories()]); setProducts(productData.items || []); setCategories(categoryData || []); setApiLive(true); }
-    catch { setProducts(demoProducts.filter(product => (!query || product.name.toLowerCase().includes(query.toLowerCase())) && (!category || product.category.slug === category))); setCategories(demoCategories); setApiLive(false); }
+    try { const [productData, categoryData] = await Promise.all([api.products({ search: query, category }), api.categories()]); setProducts(productData.items || []); setCategories(categoryData || []); setApiLive(true); setApiError(''); }
+    catch (reason) { setProducts([]); setCategories([]); setApiLive(false); setApiError(reason.message || 'The live catalog could not be loaded.'); }
     finally { setLoading(false); }
   };
   const loadCart = async () => { if (!getToken()) return; setCartLoading(true); try { setCart(await api.cart()); } catch (reason) { if (/401|token|auth/i.test(reason.message)) logout(false); else notify(reason.message); } finally { setCartLoading(false); } };
@@ -149,7 +139,7 @@ export default function App() {
   return <div className="app">
     <SiteHeader user={user} cartCount={cartCount} onAuth={() => setAuthOpen(true)} onCart={() => { setCartOpen(true); loadCart(); }} onView={setView} onLogout={logout} />
     <main>
-      {!apiLive && <div className="demo-banner"><strong>Preview mode:</strong> the live API could not be reached. The storefront is showing safe demo products. <a href={`${API_BASE_URL}/api/health`} target="_blank" rel="noreferrer">Check API ↗</a></div>}
+      {!apiLive && <div className="demo-banner"><strong>Live API error:</strong> {apiError} <a href={`${API_BASE_URL}/api/health`} target="_blank" rel="noreferrer">Check API ↗</a></div>}
       <section className="hero page"><div className="hero-copy"><span className="kicker">SMARTER COMMERCE OPERATIONS</span><h1>Useful products.<br /><em>Inventory you can trust.</em></h1><p>StockPilot connects a polished shopping experience with live stock, secure accounts and transaction-safe checkout.</p><div className="hero-actions"><a className="primary" href="#collection">Shop the collection ↘</a><button className="secondary" onClick={() => user ? setView('orders') : setAuthOpen(true)}>{user ? 'View my orders' : 'Sign in to shop'}</button></div><div className="hero-points"><span><b>✓</b> Live inventory</span><span><b>✓</b> Secure checkout</span><span><b>✓</b> Order tracking</span></div></div><div className="hero-art"><div className="hero-card card-one"><span>LOW PROFILE</span><strong>Wireless Keyboard</strong><div className="keyboard-art"><i></i></div><small>$49.99</small></div><div className="hero-card card-two"><span>7-PORT</span><strong>USB-C Hub</strong><div className="hub-art"><i></i><i></i><i></i></div><small>$39.99</small></div><div className="inventory-chip"><i></i><div><strong>Inventory connected</strong><small>Stock updates at checkout</small></div></div></div></section>
       <section className="trust-strip"><span>TRANSACTION-SAFE CHECKOUT</span><span>JWT AUTHENTICATION</span><span>REAL-TIME STOCK</span><span>ROLE-BASED ADMIN</span></section>
       <section className="collection page" id="collection"><div className="section-heading"><div><span className="kicker">CURATED ESSENTIALS</span><h2>Shop the collection</h2><p>Clean, useful products selected for modern work and everyday life.</p></div><div className="catalog-tools"><label className="search"><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search products" /></label><select value={category} onChange={event => setCategory(event.target.value)}><option value="">All categories</option>{categories.map(item => <option value={item.slug} key={item.id}>{item.name}</option>)}</select></div></div>

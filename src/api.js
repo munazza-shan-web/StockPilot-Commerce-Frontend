@@ -1,4 +1,6 @@
-export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://stockpilot-commerce-api-dcke.vercel.app').replace(/\/$/, '');
+// All browser requests use the frontend's own /api path. Vercel proxies these
+// requests to the deployed StockPilot API, avoiding cross-origin failures.
+export const API_BASE_URL = '';
 
 let token = localStorage.getItem('stockpilot_token') || '';
 

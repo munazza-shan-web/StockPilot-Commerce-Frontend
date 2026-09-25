@@ -13,7 +13,7 @@ A responsive React storefront and administration interface for the existing Stoc
 - Admin product create, update and delete controls
 - Admin order status management
 - Live inventory indicators and low-stock states
-- Safe demo preview if the API or database cannot be reached
+- Production-only live API integration with no demo-data fallback
 
 ## Stack
 
@@ -26,9 +26,8 @@ A responsive React storefront and administration interface for the existing Stoc
 
 1. Install Node.js 20 or newer.
 2. Run `npm install`.
-3. Copy `.env.example` to `.env`.
-4. Run `npm run dev`.
-5. Open the URL shown by Vite.
+3. Run `npm run dev`.
+4. Open the URL shown by Vite.
 
 The default API is:
 
@@ -47,10 +46,7 @@ After the backend database is seeded:
 2. Add the complete project folder through GitHub Desktop and push it.
 3. Import that repository in Vercel.
 4. Framework preset: **Vite**.
-5. Add the environment variable:
-
-   `VITE_API_BASE_URL=https://stockpilot-commerce-api-dcke.vercel.app`
-
+5. Do not add a `VITE_API_BASE_URL` environment variable. The included Vercel rewrite securely proxies `/api` requests to the deployed StockPilot API.
 6. Deploy.
 7. Copy the new frontend production URL.
 8. In the **StockPilot backend** Vercel project, set `CLIENT_URL` to the frontend URL.
